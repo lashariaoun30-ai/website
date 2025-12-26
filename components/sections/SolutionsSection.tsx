@@ -62,7 +62,7 @@ export function SolutionsSection() {
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border/50 pt-6">
                      <span className="text-sm font-medium text-[#006400]">Più prime visite reali.</span>
-                     <NeonButton variant="solid" className="w-full sm:w-auto">
+                     <NeonButton onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}>
                        Richiedi la tua demo
                      </NeonButton>
                   </div>
@@ -85,7 +85,7 @@ export function SolutionsSection() {
                   </div>
                   <div className="flex flex-col gap-4 border-t border-border/50 pt-6">
                      <span className="text-sm font-medium text-[#006400]">Meno mancate presentazioni.</span>
-                     <NeonButton variant="solid" className="w-full sm:w-auto">
+                     <NeonButton onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}>
                        Richiedi la tua demo
                      </NeonButton>
                   </div>
@@ -108,7 +108,7 @@ export function SolutionsSection() {
                   </div>
                   <div className="flex flex-col gap-4 border-t border-border/50 pt-6">
                      <span className="text-sm font-medium text-[#006400]">Più preventivi accettati.</span>
-                     <NeonButton variant="solid" className="w-full sm:w-auto">
+                      <NeonButton onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}>
                        Richiedi la tua demo
                      </NeonButton>
                   </div>
@@ -131,7 +131,7 @@ export function SolutionsSection() {
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border/50 pt-6">
                      <span className="text-sm font-medium text-[#006400]">Meno pressione quotidiana.</span>
-                     <NeonButton variant="solid" className="w-full sm:w-auto">
+                     <NeonButton onClick={() => document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' })}>
                        Richiedi la tua demo
                      </NeonButton>
                   </div>

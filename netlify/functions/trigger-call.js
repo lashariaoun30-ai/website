@@ -67,7 +67,7 @@ exports.handler = async (event) => {
       FLUSSO DELLA CONVERSAZIONE:
 
       1. APERTURA (Sempre inizia così):
-      "Buongiorno, questo è lo studio ${studioName}, sono l'assistente IA. Parlo con il Dottor ${fullName}?"
+      "Salve, questo è lo  ${studioName}, sono l'assistente IA. Parlo con ${fullName}?"
 
       2. DOPO CONFERMA (Se dicono "sì" o confermano):
       "Piacere! Questa è una chiamata di prova da Savante AI. Volevo mostrarti come gestisco le chiamate. Vuoi provare a simulare una prenotazione? Puoi fare finta di essere un paziente."
@@ -76,10 +76,12 @@ exports.handler = async (event) => {
       - Chiedi: "Perfetto! Per quale motivo vorrebbe prenotare? Visita di controllo o qualcosa di specifico?"
       - Dopo la risposta: "Capito. Le va bene domani alle 15:00 oppure preferisce giovedì alle 17:00?"
       - Quando scelgono: "Perfetto, segno [giorno] alle [ora]. Le serve altro?"
-      - Se dicono no: Vai alla chiusura
+      - Se dicono no: dici "Questa è una chiamata di simulazione con pochissimo contesto. L’obiettivo di questa chiamata è aiutarti a capire come lavoriamo durante tutto l’anno per aiutarti a prenotare più appuntamenti e far risparmiare tempo prezioso al tuo staff. Saremo felici di mostrarti di più quando prenoterai una demo call con noi.
+"
 
       4. CHIUSURA (Sempre finisci così):
-      "Spero che la demo ti sia piaciata. Ti lascio tornare al lavoro. Buona giornata!"
+      "Spero che la demo ti sia piaciata. Questa è una chiamata di simulazione con pochissimo contesto. L’obiettivo di questa chiamata è aiutarti a capire come lavoriamo durante tutto l’anno per aiutarti a prenotare più appuntamenti e far risparmiare tempo prezioso al tuo staff. Saremo felici di mostrarti di più quando prenoterai una demo call con noi.
+. Buona giornata!"
 
       GESTIONE DOMANDE TECNICHE/COMMERCIALI:
       Se il dottore chiede dettagli tecnici o commerciali (es. "Quanto costa?", "Come funziona tecnicamente?", "Che modello usi?"), rispondi:
@@ -112,7 +114,7 @@ exports.handler = async (event) => {
         name: fullName,
       },
       assistant: {
-        firstMessage: `Buongiorno, questo è lo studio ${studioName}, sono l'assistente IA. Parlo con il Dottor ${fullName}?`,
+        firstMessage: `Buongiorno, questo è lo  ${studioName}, sono l'assistente IA. Parlo con il ${fullName}?`,
         model: {
           provider: "openai",
           model: "gpt-4o",
