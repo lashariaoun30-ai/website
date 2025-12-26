@@ -25,7 +25,6 @@ export const DemoForm = () => {
     setError(null);
 
     try {
-      // Call Netlify Function (SECURE - no exposed keys!)
       const response = await fetch('/.netlify/functions/trigger-call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,25 +54,25 @@ export const DemoForm = () => {
       <div className="bg-card w-full max-w-md rounded-xl border border-[#006400]/20 p-6 sm:p-8 shadow-2xl shadow-[#006400]/10 text-center animate-in fade-in zoom-in duration-300">
         <div className="mx-auto w-20 h-20 bg-[#006400]/10 rounded-full flex items-center justify-center mb-6">
           <div className="w-16 h-16 bg-[#006400]/20 rounded-full flex items-center justify-center animate-pulse">
-             <CheckCircle className="w-8 h-8 text-[#006400]" />
+            <CheckCircle className="w-8 h-8 text-[#006400]" />
           </div>
         </div>
         <h3 className="text-2xl font-bold mb-3">Chiamata in Arrivo!</h3>
         <p className="text-muted-foreground text-lg leading-relaxed">
-          Tra pochi secondi il tuo telefono suonerà. <br/>
+          Tra pochi secondi il tuo telefono suonerà. <br />
           Risponderà <strong>Sara</strong>, la tua nuova segretaria AI.
         </p>
         <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-border/50">
-            <p className="text-sm font-medium text-foreground">
-              Numero in chiamata: <span className="font-mono text-[#006400]">{formData.phone}</span>
-            </p>
+          <p className="text-sm font-medium text-foreground">
+            Numero in chiamata: <span className="font-mono text-[#006400]">{formData.phone}</span>
+          </p>
         </div>
         <NeonButton 
-            variant="ghost" 
-            className="mt-6 w-full"
-            onClick={() => setIsSuccess(false)}
-          >
-            Fai un'altra prova
+          variant="ghost" 
+          className="mt-6 w-full"
+          onClick={() => setIsSuccess(false)}
+        >
+          Fai un altra prova
         </NeonButton>
       </div>
     );
@@ -90,17 +89,17 @@ export const DemoForm = () => {
         <div className="mb-8">
           <h3 className="text-2xl font-semibold mb-2 tracking-tight">Inserisci i tuoi dati</h3>
           <p className="text-muted-foreground">
-            L'IA personalizzerà la conversazione in base al nome del tuo studio.
+            L IA personalizzerà la conversazione in base al nome del tuo studio.
           </p>
         </div>
 
         {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg flex items-start gap-3 text-red-600 dark:text-red-400 text-sm">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <div className="flex-1 break-words font-medium">
-                  {error}
-                </div>
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg flex items-start gap-3 text-red-600 dark:text-red-400 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="flex-1 break-words font-medium">
+              {error}
             </div>
+          </div>
         )}
 
         <div className="space-y-5">
@@ -132,7 +131,7 @@ export const DemoForm = () => {
               placeholder="Es. Studio Dentistico Rossi"
               value={formData.studioName}
               onChange={handleChange}
-               className="h-11 bg-muted/30 focus:bg-background transition-colors"
+              className="h-11 bg-muted/30 focus:bg-background transition-colors"
             />
           </div>
 
@@ -148,7 +147,7 @@ export const DemoForm = () => {
               placeholder="+39 333 1234567"
               value={formData.phone}
               onChange={handleChange}
-               className="h-11 bg-muted/30 focus:bg-background transition-colors"
+              className="h-11 bg-muted/30 focus:bg-background transition-colors"
             />
             <p className="text-[11px] text-muted-foreground">
               Inserisci il numero completo. Aggiungeremo +39 se manca.

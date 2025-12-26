@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { NeonButton } from "./ui/neon-button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Phone, CheckCircle, Loader2 } from "lucide-react";
-import { cn } from "../lib/utils";
+import { Phone, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 export const LiveDemoForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -23,15 +23,29 @@ export const LiveDemoForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Simulate API call to Make.com webhook
-      // In production, replace with: await fetch('https://hook.eu1.make.com/your-placeholder-id', { method: 'POST', body: JSON.stringify(formData) })
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+      // Call Netlify Function
+      const response = await fetch('/.netlify/functions/trigger-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          studioName: formData.studioName,
+          phone: formData.phone
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore durante la chiamata');
+      }
+
       setIsSuccess(true);
-    } catch (error) {
-      console.error("Submission failed", error);
+    } catch (err: any) {
+      console.error("Vapi Call Error:", err);
+      setError(err.message || "Impossibile avviare la chiamata. Verifica il numero e riprova.");
     } finally {
       setIsLoading(false);
     }
@@ -43,13 +57,22 @@ export const LiveDemoForm = () => {
         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <CheckCircle className="w-8 h-8 text-[#006400]" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">Richiesta Ricevuta!</h3>
+        <h3 className="text-xl font-semibold mb-2">Chiamata in Arrivo!</h3>
         <p className="text-muted-foreground">
-          Grazie {formData.fullName}! Il nostro AI ti chiamerà tra 30 secondi al numero <span className="font-semibold text-foreground">{formData.phone}</span>.
+          Tra pochi secondi il tuo telefono suonerà. Risponderà <strong>Sara</strong>, la tua segretaria AI.
         </p>
-        <p className="text-xs text-muted-foreground mt-6">
-          Tieni il telefono a portata di mano.
-        </p>
+        <div className="mt-6 p-3 bg-muted/50 rounded-lg border">
+          <p className="text-sm font-medium">
+            Numero: <span className="font-mono text-[#006400]">{formData.phone}</span>
+          </p>
+        </div>
+        <NeonButton 
+          variant="ghost" 
+          className="mt-6 w-full"
+          onClick={() => setIsSuccess(false)}
+        >
+          Fai un'altra prova
+        </NeonButton>
       </div>
     );
   }
@@ -57,7 +80,7 @@ export const LiveDemoForm = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card m-auto h-fit w-full max-w-md rounded-xl border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)] text-left"
+      className="bg-card m-auto h-fit w-full max-w-md rounded-xl border p-0.5 shadow-md text-left"
     >
       <div className="p-8 pb-6">
         <div>
@@ -66,6 +89,13 @@ export const LiveDemoForm = () => {
             Inserisci i tuoi dati per attivare la demo.
           </p>
         </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2 text-red-600 dark:text-red-400 text-sm">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>{error}</div>
+          </div>
+        )}
 
         <div className="space-y-4 mt-6">
           <div className="space-y-2">
@@ -104,7 +134,6 @@ export const LiveDemoForm = () => {
             </Label>
             <Input
               type="email"
-              required
               name="email"
               id="email"
               placeholder="mario@esempio.it"
@@ -126,6 +155,9 @@ export const LiveDemoForm = () => {
               value={formData.phone}
               onChange={handleChange}
             />
+            <p className="text-xs text-muted-foreground">
+              Aggiungeremo +39 se manca
+            </p>
           </div>
 
           <NeonButton 
