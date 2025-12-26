@@ -41,7 +41,7 @@ export function BookingSection() {
     0
   ).getDate();
 
-  const bookingLink = `https://cal.com/savante-ai`;
+  const bookingLink = `https://app.cal.eu/savante-ai/15min`;
 
   const renderCalendarDays = () => {
     let days: React.ReactNode[] = [
