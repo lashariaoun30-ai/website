@@ -24,133 +24,21 @@ export const DemoForm = () => {
     setIsLoading(true);
     setError(null);
 
-    // Hardcoded credentials as requested for the demo
-    const API_KEY = "153f1281-e9f8-469e-b2e8-46617797093b";
-    // Updated to paid number ID
-    const PHONE_NUMBER_ID = "8da055de-9b6f-4b10-b188-e49b74740b75";
-
-    // 2. Sanitize Phone Number (Ensure E.164 format for Vapi)
-    let sanitizedPhone = formData.phone.replace(/[\s\-\(\)]/g, '');
-    
-    // Logic for prefixing
-    if (sanitizedPhone.startsWith('00')) {
-      sanitizedPhone = '+' + sanitizedPhone.slice(2);
-    } else if (!sanitizedPhone.startsWith('+')) {
-      // Default to +39 only if it looks like a mobile number or user didn't specify country
-      sanitizedPhone = '+39' + sanitizedPhone; 
-    }
-
-    // 3. Construct System Prompt & Payload
-    const systemPrompt = `
-      Sei Sara, una segretaria dentale esperta e professionale che lavora per lo studio ${formData.studioName}.
-
-      IDENTITÀ E TONO:
-      - Parla in italiano naturale, come farebbe una vera segretaria italiana
-      - Usa un tono cordiale, solare e professionale
-      - Sii concisa: risposte brevi (1-2 frasi max), niente monologhi
-      - Parla in modo colloquiale ma rispettoso (usa "lei" formale)
-      - Evita frasi robotiche o troppo formali
-
-      CONTESTO DELLA CHIAMATA:
-      Stai chiamando il Dottor/Dottoressa ${formData.fullName} (il proprietario dello studio) per mostrargli una dimostrazione di Savante AI. Il tuo obiettivo è fargli vedere come gestisci le chiamate dei pazienti in modo naturale e professionale.
-
-      FLUSSO DELLA CONVERSAZIONE:
-
-      1. APERTURA (Sempre inizia così):
-      "Buongiorno, questo è lo studio ${formData.studioName}, sono l'assistente IA. Parlo con il Dottor ${formData.fullName}?"
-
-      2. DOPO CONFERMA (Se dicono "sì" o confermano):
-      "Piacere! Questa è una chiamata di prova da Savante AI. Volevo mostrarti come gestisco le chiamate. Vuoi provare a simulare una prenotazione? Puoi fare finta di essere un paziente."
-
-      3. GESTIONE PRENOTAZIONE (Se accettano di simulare):
-      - Chiedi: "Perfetto! Per quale motivo vorrebbe prenotare? Visita di controllo o qualcosa di specifico?"
-      - Dopo la risposta: "Capito. Le va bene domani alle 15:00 oppure preferisce giovedì alle 17:00?"
-      - Quando scelgono: "Perfetto, segno [giorno] alle [ora]. Le serve altro?"
-      - Se dicono no: Vai alla chiusura
-
-      4. CHIUSURA (Sempre finisci così):
-      "Spero che la demo ti sia piaciata. Ti lascio tornare al lavoro. Buona giornata!"
-
-      GESTIONE DOMANDE TECNICHE/COMMERCIALI:
-      Se il dottore chiede dettagli tecnici o commerciali (es. "Quanto costa?", "Come funziona tecnicamente?", "Che modello usi?"), rispondi:
-      "Per i dettagli tecnici e commerciali, ti consiglio di parlarne direttamente con i fondatori di Savante AI durante una consulenza gratuita. Io sono qui solo per mostrarti come accolgo i pazienti. Vuoi che ti passi il link per prenotare?"
-
-      REGOLE COMPORTAMENTALI:
-
-      ✅ SEMPRE:
-      - Rispondi con frasi brevi e naturali (max 2 frasi)
-      - Usa pause naturali quando parli
-      - Se l'utente ti interrompe, adattati e segui il nuovo flusso
-      - Sii paziente e sorridente
-      - Conferma sempre ciò che l'utente dice prima di procedere
-
-      ❌ MAI:
-      - Fare lunghi monologhi o spiegazioni complesse
-      - Ripetere informazioni già dette
-      - Usare linguaggio robotico o troppo formale
-      - Inventare dettagli su prezzi, funzionalità o contratti
-      - Insistere se l'utente vuole chiudere la chiamata
-
-      OBIETTIVO: Far sentire il dottore come se stesse parlando con una vera segretaria professionale, non con un robot. Mantieni la conversazione fluida, naturale e breve.
-    `;
-
-    const payload = {
-      phoneNumberId: PHONE_NUMBER_ID,
-      customer: {
-        number: sanitizedPhone,
-        name: formData.fullName,
-      },
-      assistant: {
-        firstMessage: `Buongiorno, questo è lo studio ${formData.studioName}, sono l'assistente IA. Parlo con il Dottor ${formData.fullName}?`,
-        model: {
-          provider: "openai",
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            }
-          ]
-        },
-        voice: {
-          provider: "11labs", 
-          voiceId: "cgSgspJ2msm6clMCkdW9", // Jessica
-          model: "eleven_turbo_v2_5"
-        },
-        transcriber: {
-          provider: "deepgram",
-          model: "nova-2",
-          language: "it"
-        }
-      }
-    };
-
     try {
-      // 4. Send Request directly to Vapi (Client-Side)
-      const response = await fetch('https://api.vapi.ai/call', {
+      // Call Netlify Function (SECURE - no exposed keys!)
+      const response = await fetch('/.netlify/functions/trigger-call', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          studioName: formData.studioName,
+          phone: formData.phone
+        }),
       });
 
       if (!response.ok) {
-        // Parse error carefully
-        let errorMsg = `Errore HTTP ${response.status}`;
-        try {
-            const errorData = await response.json();
-            // Handle specific Vapi error regarding free tier international calls
-            if (errorData.message && errorData.message.includes("international calls")) {
-                errorMsg = "Il piano gratuito Vapi non supporta chiamate verso l'Italia (+39). Usa un numero USA o aggiorna il piano su vapi.ai.";
-            } else {
-                errorMsg = errorData.message || JSON.stringify(errorData);
-            }
-        } catch (e) {
-            errorMsg = await response.text();
-        }
-        throw new Error(errorMsg);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore durante la chiamata');
       }
 
       setIsSuccess(true);
