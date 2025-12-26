@@ -1,7 +1,5 @@
 exports.handler = async (event) => {
-  console.log('=== FUNCTION CALLED ===');
-  console.log('Method:', event.httpMethod);
-  console.log('Headers:', JSON.stringify(event.headers));
+  console.log('Function called');
   
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -16,7 +14,6 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    console.log('ERROR: Wrong method');
     return {
       statusCode: 405,
       headers: { 'Content-Type': 'application/json' },
@@ -25,31 +22,25 @@ exports.handler = async (event) => {
   }
 
   try {
-    console.log('Body:', event.body);
     const { fullName, studioName, phone } = JSON.parse(event.body);
-    console.log('Parsed data:', { fullName, studioName, phone });
 
     if (!fullName || !studioName || !phone) {
-      console.log('ERROR: Missing fields');
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Missing required fields' })
+        body: JSON.stringify({ error: 'Missing fields' })
       };
     }
 
     const API_KEY = process.env.VAPI_PRIVATE_API_KEY;
     const PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID;
 
-    console.log('API_KEY exists:', !!API_KEY);
-    console.log('PHONE_NUMBER_ID exists:', !!PHONE_NUMBER_ID);
-
     if (!API_KEY || !PHONE_NUMBER_ID) {
-      console.log('ERROR: Missing environment variables');
+      console.error('Missing env vars');
       return {
         statusCode: 500,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Server configuration error' })
+        body: JSON.stringify({ error: 'Config error' })
       };
     }
 
@@ -60,25 +51,27 @@ exports.handler = async (event) => {
       sanitizedPhone = '+39' + sanitizedPhone;
     }
 
-    console.log('Sanitized phone:', sanitizedPhone);
-
+    // CORRECTED PAYLOAD STRUCTURE according to Vapi docs
     const payload = {
       phoneNumberId: PHONE_NUMBER_ID,
-      customer: { number: sanitizedPhone, name: fullName },
+      customer: {
+        number: sanitizedPhone,
+        name: fullName
+      },
       assistant: {
         firstMessage: `Buongiorno, questo è lo studio ${studioName}, sono l'assistente IA. Parlo con il Dottor ${fullName}?`,
         model: {
           provider: "openai",
           model: "gpt-4o",
+          temperature: 0.7,
           messages: [{
             role: "system",
-            content: `Sei Sara. Chiami ${fullName} per demo. Breve e naturale.`
+            content: `Sei Sara, segretaria per lo studio ${studioName}. Chiami ${fullName} per una demo. Sii breve, naturale e professionale.`
           }]
         },
         voice: {
           provider: "11labs",
-          voiceId: "cgSgspJ2msm6clMCkdW9",
-          model: "eleven_turbo_v2_5"
+          voiceId: "cgSgspJ2msm6clMCkdW9"
         },
         transcriber: {
           provider: "deepgram",
@@ -88,10 +81,9 @@ exports.handler = async (event) => {
       }
     };
 
-    console.log('Calling Vapi at: https://api.vapi.ai/call');
-    console.log('Payload:', JSON.stringify(payload, null, 2));
-
-    const response = await fetch('https://api.vapi.ai/call', {
+    console.log('Calling Vapi API...');
+    
+    const response = await fetch('https://api.vapi.ai/call/phone', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
@@ -100,12 +92,11 @@ exports.handler = async (event) => {
       body: JSON.stringify(payload)
     });
 
-    console.log('Vapi response status:', response.status);
-    const responseText = await response.text();
-    console.log('Vapi response body:', responseText);
+    console.log('Vapi status:', response.status);
 
     if (!response.ok) {
-      console.log('ERROR: Vapi API failed');
+      const errorText = await response.text();
+      console.error('Vapi error:', errorText);
       return {
         statusCode: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -113,8 +104,8 @@ exports.handler = async (event) => {
       };
     }
 
-    const data = JSON.parse(responseText);
-    console.log('SUCCESS! Call ID:', data.id);
+    const data = await response.json();
+    console.log('Success! Call ID:', data.id);
 
     return {
       statusCode: 200,
@@ -126,8 +117,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.log('EXCEPTION:', error.message);
-    console.log('Stack:', error.stack);
+    console.error('Error:', error.message);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
