@@ -1,24 +1,58 @@
 exports.handler = async (event) => {
+  console.log('=== FUNCTION CALLED ===');
+  console.log('Method:', event.httpMethod);
+  console.log('Headers:', JSON.stringify(event.headers));
+  
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    console.log('ERROR: Wrong method');
+    return {
+      statusCode: 405,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
+    console.log('Body:', event.body);
     const { fullName, studioName, phone } = JSON.parse(event.body);
+    console.log('Parsed data:', { fullName, studioName, phone });
 
     if (!fullName || !studioName || !phone) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Tutti i campi sono obbligatori' }) };
+      console.log('ERROR: Missing fields');
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Missing required fields' })
+      };
     }
 
-    // SECURE: Keys from environment variables
     const API_KEY = process.env.VAPI_PRIVATE_API_KEY;
     const PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID;
 
+    console.log('API_KEY exists:', !!API_KEY);
+    console.log('PHONE_NUMBER_ID exists:', !!PHONE_NUMBER_ID);
+
     if (!API_KEY || !PHONE_NUMBER_ID) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Server configuration error' }) };
+      console.log('ERROR: Missing environment variables');
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Server configuration error' })
+      };
     }
 
-    // Sanitize phone
     let sanitizedPhone = phone.replace(/[\s\-\(\)]/g, '');
     if (sanitizedPhone.startsWith('00')) {
       sanitizedPhone = '+' + sanitizedPhone.slice(2);
@@ -26,36 +60,7 @@ exports.handler = async (event) => {
       sanitizedPhone = '+39' + sanitizedPhone;
     }
 
-    // Validate phone format
-    if (!/^\+\d{10,15}$/.test(sanitizedPhone)) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Numero di telefono non valido' }) };
-    }
-
-    const systemPrompt = `Sei Sara, una segretaria dentale esperta e professionale che lavora per lo studio ${studioName}.
-
-IDENTITÀ E TONO:
-- Parla in italiano naturale, come farebbe una vera segretaria italiana
-- Usa un tono cordiale, solare e professionale
-- Sii concisa: risposte brevi (1-2 frasi max), niente monologhi
-- Parla in modo colloquiale ma rispettoso (usa "lei" formale)
-
-CONTESTO DELLA CHIAMATA:
-Stai chiamando il Dottor/Dottoressa ${fullName} per mostrargli una dimostrazione di Savante AI.
-
-FLUSSO:
-1. APERTURA: "Buongiorno, questo è lo studio ${studioName}, sono l'assistente IA. Parlo con il Dottor ${fullName}?"
-2. DOPO CONFERMA: "Piacere! Questa è una chiamata di prova da Savante AI. Volevo mostrarti come gestisco le chiamate. Vuoi provare a simulare una prenotazione?"
-3. GESTIONE PRENOTAZIONE: Chiedi motivo, proponi orari (domani 15:00 o giovedì 17:00)
-4. CHIUSURA: "Spero che la demo ti sia piaciuta. Ti lascio tornare al lavoro. Buona giornata!"
-
-GESTIONE DOMANDE TECNICHE:
-Se chiede prezzi/dettagli: "Per i dettagli commerciali, ti consiglio di parlare con il team Savante. Io sono qui solo per mostrarti come lavoro."
-
-REGOLE:
-✅ Risposte brevi (max 2 frasi)
-✅ Tono naturale
-❌ Mai monologhi
-❌ Mai inventare prezzi`;
+    console.log('Sanitized phone:', sanitizedPhone);
 
     const payload = {
       phoneNumberId: PHONE_NUMBER_ID,
@@ -65,51 +70,68 @@ REGOLE:
         model: {
           provider: "openai",
           model: "gpt-4o",
-          temperature: 0.7,
-          messages: [{ role: "system", content: systemPrompt }]
+          messages: [{
+            role: "system",
+            content: `Sei Sara. Chiami ${fullName} per demo. Breve e naturale.`
+          }]
         },
         voice: {
           provider: "11labs",
           voiceId: "cgSgspJ2msm6clMCkdW9",
-          model: "eleven_turbo_v2_5",
-          stability: 0.6,
-          similarityBoost: 0.8
+          model: "eleven_turbo_v2_5"
         },
         transcriber: {
           provider: "deepgram",
           model: "nova-2",
-          language: "it",
-          smartFormat: true
-        },
-        responseDelaySeconds: 0.4,
-        maxDurationSeconds: 300
+          language: "it"
+        }
       }
     };
 
-    const response = await fetch('https://api.vapi.ai/call/phone', {
+    console.log('Calling Vapi at: https://api.vapi.ai/call');
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch('https://api.vapi.ai/call', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
+    console.log('Vapi response status:', response.status);
+    const responseText = await response.text();
+    console.log('Vapi response body:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Vapi Error:', errorText);
-      return { statusCode: response.status, body: JSON.stringify({ error: 'Errore chiamata' }) };
+      console.log('ERROR: Vapi API failed');
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: `Vapi error: ${response.status}` })
+      };
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
+    console.log('SUCCESS! Call ID:', data.id);
+
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ success: true, callId: data.id })
     };
 
   } catch (error) {
-    console.error('Handler Error:', error);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Errore del server' }) };
+    console.log('EXCEPTION:', error.message);
+    console.log('Stack:', error.stack);
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: error.message })
+    };
   }
 };
