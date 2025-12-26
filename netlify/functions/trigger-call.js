@@ -86,7 +86,7 @@ REGOLE:
       }
     };
 
-    const response = await fetch('https://api.vapi.ai/call', {
+    const response = await fetch('https://api.vapi.ai/call/phone', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
