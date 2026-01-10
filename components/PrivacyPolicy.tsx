@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
               60125 Ancona (AN), Italia
             </p>
             <p>
-              <strong>Indirizzo email del Titolare:</strong> [Inserire Email]
+              <strong>Indirizzo email del Titolare:</strong> [lashariaoun30@gmail.com]
             </p>
           </section>
 

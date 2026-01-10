@@ -101,7 +101,8 @@ export function Footer() {
             <address className="space-y-2 text-sm not-italic text-zinc-400">
               <p>Via Guglielmo Marconi 129</p>
               <p>60125 Ancona (AN), Italia</p>
-              {/* <p>Email: info@savante.ai</p> */}
+              <p>P. IVA 03031620424</p>
+              {/* <p>Email: lashariaoun30@gmail.com</p> */}
             </address>
           </div>
           <div className="relative">
