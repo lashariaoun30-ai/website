@@ -1,19 +1,22 @@
 import React, { useState } from "react";
-import { PhoneMissed, UserX, FileText, Calculator, Mail } from "lucide-react";
+import { PhoneMissed, UserX, FileText, Calculator, Mail, Info, ArrowRight } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { ScrollReveal } from "../ui/scroll-reveal";
-import { Slider } from "../ui/slider";
 import { CountUp } from "../ui/count-up";
 import { NeonButton } from "../ui/neon-button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Card, CardContent } from "../ui/card";
 
-// Hidden calculation constants
-const MISSED_CALL_RATE = 0.32;
-const NEVER_CALLBACK_RATE = 0.75;
-const NEW_PATIENT_RATIO = 0.30;
-const FOLLOWUP_DROP_RATE = 0.40;
+// Conservative calculation constants
+const MISSED_CALL_RATE = 0.20; // 20% — conservative (studies show 30-35%)
+const NEVER_CALLBACK_RATE = 0.75; // 75% never call back (studies show up to 85%)
+const NEW_PATIENT_RATIO = 0.30; // 30% of calls are new patients
+const FOLLOWUP_DROP_RATE = 0.40; // 40% of quotes never get followed up
 const AVG_QUOTE_VALUE = 800;
 const WORKING_DAYS = 22;
+
+const bookingLink = "https://app.cal.eu/savante-ai/15min";
 
 export interface CalculationResults {
   missedCallLoss: number;
@@ -67,39 +70,27 @@ interface CalculatorStepProps {
 }
 
 export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepProps) {
-  const [dailyCalls, setDailyCalls] = useState(25);
-  const [hoursOpen, setHoursOpen] = useState(9);
-  const [noShows, setNoShows] = useState(8);
-  const [patientValue, setPatientValue] = useState(400);
+  const [dailyCalls, setDailyCalls] = useState("25");
+  const [noShows, setNoShows] = useState("8");
+  const [patientValue, setPatientValue] = useState("400");
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [showResults, setShowResults] = useState(false);
 
   const handleCalculate = () => {
-    const r = calculate(dailyCalls, noShows, patientValue);
+    const calls = parseInt(dailyCalls) || 0;
+    const ns = parseInt(noShows) || 0;
+    const pv = parseInt(patientValue) || 0;
+
+    if (calls <= 0 || pv <= 0) return;
+
+    const r = calculate(calls, ns, pv);
     setResults(r);
     setShowResults(true);
     onCalculate(r);
 
-    // Scroll to results after a brief delay
     setTimeout(() => {
       document.getElementById("calc-results")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-  };
-
-  const getPersonalizationText = () => {
-    const lines: string[] = [];
-    if (dailyCalls >= 40) {
-      lines.push(`Con ${dailyCalls} chiamate al giorno, il tuo studio è nella fascia alta di volume. Ogni chiamata persa pesa di più.`);
-    } else if (dailyCalls >= 20) {
-      lines.push(`Con ${dailyCalls} chiamate al giorno, il tuo studio ha un volume medio. Ma anche poche chiamate perse al giorno si accumulano velocemente.`);
-    }
-    if (noShows >= 10) {
-      lines.push(`Il tuo tasso di no-show (${noShows}/mese) è sopra la media nazionale. Qui c'è molto margine di recupero.`);
-    }
-    if (patientValue >= 600) {
-      lines.push(`Con pazienti dal valore medio di €${patientValue}, ogni singola chiamata persa pesa di più.`);
-    }
-    return lines;
   };
 
   return (
@@ -119,51 +110,59 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
 
           {/* Calculator Card */}
           <div className="max-w-xl mx-auto">
-            <Card className="border border-border shadow-xl overflow-hidden">
+            <Card className="border border-border shadow-xl overflow-hidden relative">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#006400] to-transparent opacity-50"></div>
-              <CardContent className="p-6 sm:p-8 space-y-6">
-                <Slider
-                  min={5}
-                  max={80}
-                  step={5}
-                  value={dailyCalls}
-                  onChange={setDailyCalls}
-                  label="Quante chiamate riceve il tuo studio al giorno?"
-                  formatValue={(v) => `${v} chiamate`}
-                />
-                <Slider
-                  min={6}
-                  max={12}
-                  step={1}
-                  value={hoursOpen}
-                  onChange={setHoursOpen}
-                  label="Quante ore è aperto lo studio?"
-                  formatValue={(v) => `${v} ore`}
-                />
-                <Slider
-                  min={0}
-                  max={30}
-                  step={1}
-                  value={noShows}
-                  onChange={setNoShows}
-                  label="Quanti pazienti non si presentano al mese?"
-                  formatValue={(v) => `${v} no-show`}
-                />
-                <Slider
-                  min={100}
-                  max={2000}
-                  step={50}
-                  value={patientValue}
-                  onChange={setPatientValue}
-                  label="Valore medio di un nuovo paziente?"
-                  formatValue={(v) =>
-                    new Intl.NumberFormat("it-IT", {
-                      style: "currency",
-                      currency: "EUR",
-                      minimumFractionDigits: 0,
-                    }).format(v)
-                  }
-                />
+              <CardContent className="p-6 sm:p-8 space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="dailyCalls" className="text-sm font-medium">
+                    Quante chiamate riceve il tuo studio al giorno?
+                  </Label>
+                  <Input
+                    type="number"
+                    id="dailyCalls"
+                    min={1}
+                    max={200}
+                    placeholder="Es. 25"
+                    value={dailyCalls}
+                    onChange={(e) => setDailyCalls(e.target.value)}
+                    className="h-11 bg-muted/30 focus:bg-background transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="noShows" className="text-sm font-medium">
+                    Quanti pazienti non si presentano al mese? (no-show)
+                  </Label>
+                  <Input
+                    type="number"
+                    id="noShows"
+                    min={0}
+                    max={100}
+                    placeholder="Es. 8"
+                    value={noShows}
+                    onChange={(e) => setNoShows(e.target.value)}
+                    className="h-11 bg-muted/30 focus:bg-background transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="patientValue" className="text-sm font-medium">
+                    Valore medio di un nuovo paziente? (€)
+                  </Label>
+                  <Input
+                    type="number"
+                    id="patientValue"
+                    min={50}
+                    max={10000}
+                    placeholder="Es. 400"
+                    value={patientValue}
+                    onChange={(e) => setPatientValue(e.target.value)}
+                    className="h-11 bg-muted/30 focus:bg-background transition-colors"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Prima visita + trattamento medio
+                  </p>
+                </div>
 
                 <NeonButton
                   variant="solid"
@@ -212,29 +211,55 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
                   icon={<PhoneMissed className="h-5 w-5" />}
                   label="Chiamate perse"
                   amount={results.missedCallLoss}
+                  detail={`${dailyCalls} chiamate × 20% perse × 30% nuovi pazienti × 75% non richiamano`}
                 />
                 <BreakdownCard
                   icon={<UserX className="h-5 w-5" />}
                   label="No-show"
                   amount={results.noShowLoss}
+                  detail={`${noShows} no-show × €${patientValue} valore medio`}
                 />
                 <BreakdownCard
                   icon={<FileText className="h-5 w-5" />}
                   label="Follow-up mancati"
                   amount={results.followupLoss}
+                  detail="40% dei preventivi non vengono mai ricontattati"
                 />
               </div>
 
-              {/* Personalization */}
-              {getPersonalizationText().length > 0 && (
-                <div className="bg-muted/30 rounded-xl border border-border p-5 mb-8 space-y-2">
-                  {getPersonalizationText().map((line, i) => (
-                    <p key={i} className="text-sm text-muted-foreground">
-                      {line}
-                    </p>
-                  ))}
+              {/* Methodology */}
+              <div className="bg-muted/30 rounded-xl border border-border p-5 mb-8">
+                <div className="flex items-start gap-3 mb-3">
+                  <Info className="h-5 w-5 text-[#006400] shrink-0 mt-0.5" />
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Come calcoliamo questi numeri
+                  </h4>
                 </div>
-              )}
+                <div className="space-y-3 text-sm text-muted-foreground leading-relaxed pl-8">
+                  <p>
+                    <strong className="text-foreground">Chiamate perse (20%):</strong> Secondo studi di settore, gli studi dentistici perdono tra il 30% e il 35% delle chiamate in entrata
+                    (<a href="https://www.getreach.co/blog/32-of-dental-calls-go-unanswered-how-to-fix-it" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Reach</a>,
+                    {" "}<a href="https://www.resonateapp.com/resources/missed-calls-dental-practices-statistics" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Resonate</a>).
+                    Noi usiamo un valore conservativo del <strong className="text-foreground">20%</strong>.
+                  </p>
+                  <p>
+                    <strong className="text-foreground">Pazienti che non richiamano (75%):</strong> I dati mostrano che fino all'85% dei pazienti che trovano il telefono occupato o la segreteria non richiama mai
+                    (<a href="https://www.peerlogic.com/post/turning-missed-dental-phone-calls-into-profit" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Peerlogic</a>).
+                    Noi usiamo il <strong className="text-foreground">75%</strong>.
+                  </p>
+                  <p>
+                    <strong className="text-foreground">No-show:</strong> Calcolato direttamente dai tuoi dati: {noShows} pazienti che non si presentano × €{patientValue} di valore medio.
+                  </p>
+                  <p>
+                    <strong className="text-foreground">Follow-up mancati:</strong> Circa il 40% dei preventivi consegnati non viene mai seguito con un ricontatto
+                    (<a href="https://www.dentemax.com/dentists/blog-articles/2025/Why_missed_phone_calls_are_dental_offices_largest_revenue_loss" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">DenteMax</a>).
+                    Di questi, stimiamo che il 30% si sarebbe convertito.
+                  </p>
+                  <p className="text-xs italic text-muted-foreground/70 pt-1">
+                    Nota: Queste stime sono conservative rispetto alle medie di settore. I numeri reali potrebbero essere più alti.
+                  </p>
+                </div>
+              </div>
 
               {/* Validation warning */}
               {results.totalMonthly < 2000 && (
@@ -245,14 +270,36 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
                 </div>
               )}
 
-              {/* Email capture CTA */}
-              <div className="text-center">
+              {/* CTA: Book a call */}
+              <div className="text-center space-y-4">
+                <a
+                  href={bookingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full sm:w-auto sm:inline-block"
+                >
+                  <NeonButton
+                    variant="solid"
+                    size="lg"
+                    className="w-full sm:min-w-[320px] px-8 py-5 text-base font-semibold shadow-lg shadow-[#006400]/20 flex items-center justify-center gap-2 transition-all hover:scale-105"
+                  >
+                    Scopri come recuperare questi soldi
+                    <ArrowRight className="h-5 w-5" />
+                  </NeonButton>
+                </a>
+                <p className="text-sm text-muted-foreground">
+                  Consulenza gratuita di 10 minuti — nessun impegno
+                </p>
+              </div>
+
+              {/* Email capture link */}
+              <div className="text-center mt-6">
                 <button
                   onClick={onEmailCapture}
                   className="inline-flex items-center gap-2 text-[#006400] hover:text-[#005000] font-medium transition-colors text-sm"
                 >
                   <Mail className="h-4 w-4" />
-                  Vuoi ricevere il report completo via email?
+                  Oppure ricevi il report completo via email
                 </button>
               </div>
             </ScrollReveal>
@@ -267,10 +314,12 @@ function BreakdownCard({
   icon,
   label,
   amount,
+  detail,
 }: {
   icon: React.ReactNode;
   label: string;
   amount: number;
+  detail: string;
 }) {
   return (
     <Card className="border border-border">
@@ -283,6 +332,7 @@ function BreakdownCard({
           <CountUp to={amount} currency duration={1.5} />
           <span className="text-sm font-normal text-muted-foreground">/mese</span>
         </p>
+        <p className="text-xs text-muted-foreground/70 leading-snug">{detail}</p>
       </CardContent>
     </Card>
   );
