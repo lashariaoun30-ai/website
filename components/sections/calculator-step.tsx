@@ -13,7 +13,7 @@ const MISSED_CALL_RATE = 0.20; // 20% — conservative (studies show 30-35%)
 const NEVER_CALLBACK_RATE = 0.75; // 75% never call back (studies show up to 85%)
 const NEW_PATIENT_RATIO = 0.30; // 30% of calls are new patients
 const FOLLOWUP_DROP_RATE = 0.40; // 40% of quotes never get followed up
-const AVG_QUOTE_VALUE = 800;
+const FOLLOWUP_CONVERSION = 0.30; // 30% of dropped follow-ups would have converted
 const WORKING_DAYS = 22;
 
 const bookingLink = "https://app.cal.eu/savante-ai/15min";
@@ -30,8 +30,10 @@ export interface CalculationResults {
 function calculate(
   dailyCalls: number,
   noShows: number,
-  patientValue: number
+  patientValue: number,
+  preventiviPerMonth: number
 ): CalculationResults {
+  // Missed calls: dailyCalls × 20% missed × 30% new patients × 75% never call back × value × 22 days
   const missedCallLoss =
     dailyCalls *
     MISSED_CALL_RATE *
@@ -40,14 +42,15 @@ function calculate(
     patientValue *
     WORKING_DAYS;
 
+  // No-show: each no-show is a booked appointment worth patientValue
   const noShowLoss = noShows * patientValue;
 
+  // Follow-up: user's preventivi × 40% not followed up × 30% would have converted × patientValue
   const followupLoss =
-    dailyCalls *
-    NEW_PATIENT_RATIO *
-    WORKING_DAYS *
+    preventiviPerMonth *
     FOLLOWUP_DROP_RATE *
-    (AVG_QUOTE_VALUE * 0.3);
+    FOLLOWUP_CONVERSION *
+    patientValue;
 
   const rawTotal = missedCallLoss + noShowLoss + followupLoss;
   const totalMonthly = Math.round(rawTotal / 10) * 10;
@@ -73,6 +76,7 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
   const [dailyCalls, setDailyCalls] = useState("25");
   const [noShows, setNoShows] = useState("8");
   const [patientValue, setPatientValue] = useState("400");
+  const [preventivi, setPreventivi] = useState("20");
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -80,10 +84,11 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
     const calls = parseInt(dailyCalls) || 0;
     const ns = parseInt(noShows) || 0;
     const pv = parseInt(patientValue) || 0;
+    const prev = parseInt(preventivi) || 0;
 
     if (calls <= 0 || pv <= 0) return;
 
-    const r = calculate(calls, ns, pv);
+    const r = calculate(calls, ns, pv, prev);
     setResults(r);
     setShowResults(true);
     onCalculate(r);
@@ -92,6 +97,15 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
       document.getElementById("calc-results")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
+
+  // Pre-calculate intermediate numbers for display
+  const callsNum = parseInt(dailyCalls) || 0;
+  const missedPerDay = Math.round(callsNum * MISSED_CALL_RATE);
+  const newPatientMissed = +(callsNum * MISSED_CALL_RATE * NEW_PATIENT_RATIO).toFixed(1);
+  const lostForever = +(callsNum * MISSED_CALL_RATE * NEW_PATIENT_RATIO * NEVER_CALLBACK_RATE).toFixed(1);
+  const prevNum = parseInt(preventivi) || 0;
+  const droppedPrev = Math.round(prevNum * FOLLOWUP_DROP_RATE);
+  const wouldConvert = +(prevNum * FOLLOWUP_DROP_RATE * FOLLOWUP_CONVERSION).toFixed(1);
 
   return (
     <section className="py-16 md:py-24 bg-background relative overflow-hidden">
@@ -131,7 +145,7 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
 
                 <div className="space-y-2">
                   <Label htmlFor="noShows" className="text-sm font-medium">
-                    Quanti pazienti non si presentano al mese? (no-show)
+                    Quanti appuntamenti saltano al mese? (no-show)
                   </Label>
                   <Input
                     type="number"
@@ -143,11 +157,30 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
                     onChange={(e) => setNoShows(e.target.value)}
                     className="h-11 bg-muted/30 focus:bg-background transition-colors"
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    Appuntamenti confermati dove il paziente non si presenta
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="preventivi" className="text-sm font-medium">
+                    Quanti preventivi consegni al mese?
+                  </Label>
+                  <Input
+                    type="number"
+                    id="preventivi"
+                    min={0}
+                    max={200}
+                    placeholder="Es. 20"
+                    value={preventivi}
+                    onChange={(e) => setPreventivi(e.target.value)}
+                    className="h-11 bg-muted/30 focus:bg-background transition-colors"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="patientValue" className="text-sm font-medium">
-                    Valore medio di un nuovo paziente? (€)
+                    Valore medio di un trattamento? (€)
                   </Label>
                   <Input
                     type="number"
@@ -211,19 +244,19 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
                   icon={<PhoneMissed className="h-5 w-5" />}
                   label="Chiamate perse"
                   amount={results.missedCallLoss}
-                  detail={`${dailyCalls} chiamate × 20% perse × 30% nuovi pazienti × 75% non richiamano`}
+                  detail={`${missedPerDay} chiamate perse/giorno → ${newPatientMissed} nuovi pazienti persi → ${lostForever} non richiamano mai × €${patientValue} × 22 giorni`}
                 />
                 <BreakdownCard
                   icon={<UserX className="h-5 w-5" />}
                   label="No-show"
                   amount={results.noShowLoss}
-                  detail={`${noShows} no-show × €${patientValue} valore medio`}
+                  detail={`${noShows} appuntamenti confermati saltati × €${patientValue} per trattamento`}
                 />
                 <BreakdownCard
                   icon={<FileText className="h-5 w-5" />}
                   label="Follow-up mancati"
                   amount={results.followupLoss}
-                  detail="40% dei preventivi non vengono mai ricontattati"
+                  detail={`${preventivi} preventivi → ${droppedPrev} non seguiti → ${wouldConvert} si sarebbero convertiti × €${patientValue}`}
                 />
               </div>
 
@@ -240,20 +273,16 @@ export function CalculatorStep({ onCalculate, onEmailCapture }: CalculatorStepPr
                     <strong className="text-foreground">Chiamate perse (20%):</strong> Secondo studi di settore, gli studi dentistici perdono tra il 30% e il 35% delle chiamate in entrata
                     (<a href="https://www.getreach.co/blog/32-of-dental-calls-go-unanswered-how-to-fix-it" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Reach</a>,
                     {" "}<a href="https://www.resonateapp.com/resources/missed-calls-dental-practices-statistics" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Resonate</a>).
-                    Noi usiamo un valore conservativo del <strong className="text-foreground">20%</strong>.
+                    Noi usiamo un valore conservativo del <strong className="text-foreground">20%</strong>. Di queste, il 30% sono nuovi pazienti e il 75% di chi non trova risposta non richiama mai
+                    (<a href="https://www.peerlogic.com/post/turning-missed-dental-phone-calls-into-profit" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Peerlogic</a> riporta fino all'85% — noi usiamo il 75%).
                   </p>
                   <p>
-                    <strong className="text-foreground">Pazienti che non richiamano (75%):</strong> I dati mostrano che fino all'85% dei pazienti che trovano il telefono occupato o la segreteria non richiama mai
-                    (<a href="https://www.peerlogic.com/post/turning-missed-dental-phone-calls-into-profit" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">Peerlogic</a>).
-                    Noi usiamo il <strong className="text-foreground">75%</strong>.
+                    <strong className="text-foreground">No-show:</strong> Ogni no-show è un appuntamento confermato dove il paziente non si presenta — una poltrona vuota e tempo clinico perso. Calcolato direttamente dai tuoi dati: {noShows} appuntamenti saltati × €{patientValue} di valore medio per trattamento.
                   </p>
                   <p>
-                    <strong className="text-foreground">No-show:</strong> Calcolato direttamente dai tuoi dati: {noShows} pazienti che non si presentano × €{patientValue} di valore medio.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">Follow-up mancati:</strong> Circa il 40% dei preventivi consegnati non viene mai seguito con un ricontatto
+                    <strong className="text-foreground">Follow-up mancati:</strong> Dei {preventivi} preventivi che consegni al mese, circa il 40% non viene mai seguito con un ricontatto
                     (<a href="https://www.dentemax.com/dentists/blog-articles/2025/Why_missed_phone_calls_are_dental_offices_largest_revenue_loss" target="_blank" rel="noopener noreferrer" className="text-[#006400] underline hover:text-[#005000]">DenteMax</a>).
-                    Di questi, stimiamo che il 30% si sarebbe convertito.
+                    Di questi {droppedPrev} preventivi abbandonati, stimiamo che il 30% ({wouldConvert}) si sarebbe convertito con un follow-up al momento giusto.
                   </p>
                   <p className="text-xs italic text-muted-foreground/70 pt-1">
                     Nota: Queste stime sono conservative rispetto alle medie di settore. I numeri reali potrebbero essere più alti.
