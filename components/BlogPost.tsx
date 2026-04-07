@@ -87,17 +87,67 @@ export default function BlogPostPage() {
           </div>
 
           {/* Article body */}
+          <style>{`
+            .article-body h2 {
+              font-size: 1.75rem;
+              font-weight: 700;
+              letter-spacing: -0.025em;
+              color: hsl(var(--foreground));
+              margin-top: 2.5rem;
+              margin-bottom: 1rem;
+              line-height: 1.3;
+            }
+            .article-body h3 {
+              font-size: 1.35rem;
+              font-weight: 700;
+              letter-spacing: -0.025em;
+              color: hsl(var(--foreground));
+              margin-top: 2rem;
+              margin-bottom: 0.75rem;
+              line-height: 1.3;
+            }
+            .article-body p {
+              color: hsl(var(--muted-foreground));
+              line-height: 1.8;
+              margin-bottom: 1.25rem;
+            }
+            .article-body strong {
+              color: hsl(var(--foreground));
+              font-weight: 600;
+            }
+            .article-body a {
+              color: #006400;
+              text-decoration: underline;
+              text-underline-offset: 2px;
+            }
+            .article-body a:hover {
+              color: #005000;
+            }
+            .article-body ul, .article-body ol {
+              margin: 1rem 0 1.5rem 0;
+              padding-left: 1.5rem;
+            }
+            .article-body ul {
+              list-style-type: disc;
+            }
+            .article-body ol {
+              list-style-type: decimal;
+            }
+            .article-body li {
+              color: hsl(var(--muted-foreground));
+              line-height: 1.75;
+              margin-bottom: 0.5rem;
+            }
+            .article-body li strong {
+              color: hsl(var(--foreground));
+            }
+            @media (min-width: 768px) {
+              .article-body h2 { font-size: 2rem; }
+              .article-body h3 { font-size: 1.5rem; }
+            }
+          `}</style>
           <div
-            className="max-w-3xl mx-auto prose prose-lg
-              prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
-              prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-10 prose-h2:mb-4
-              prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mt-8 prose-h3:mb-3
-              prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
-              prose-li:text-muted-foreground prose-li:leading-relaxed
-              prose-strong:text-foreground
-              prose-a:text-[#006400] prose-a:underline hover:prose-a:text-[#005000]
-              prose-ul:my-4 prose-ul:space-y-1
-              dark:prose-invert"
+            className="article-body max-w-3xl mx-auto"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
