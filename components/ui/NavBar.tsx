@@ -88,11 +88,11 @@ export function NavBar({ items, className }: NavBarProps) {
       <div className="flex items-center gap-1 sm:gap-2 bg-white/70 dark:bg-black/70 border border-gray-200 dark:border-gray-800 backdrop-blur-xl py-2 px-2 rounded-full shadow-lg transition-all duration-300 overflow-hidden">
         
         {/* Logo Section - Visible on all devices */}
-        <div className="flex items-center pl-4 pr-2 border-r border-gray-200 dark:border-gray-800 mr-2 shrink-0">
-            <span className="font-bold text-sm tracking-tight text-foreground select-none whitespace-nowrap">
+        <a href="#/" className="flex items-center pl-4 pr-2 border-r border-gray-200 dark:border-gray-800 mr-2 shrink-0">
+            <span className="font-bold text-sm tracking-tight text-foreground select-none whitespace-nowrap cursor-pointer">
               SAVANTE AI
             </span>
-        </div>
+        </a>
 
         {items.map((item) => {
           const Icon = item.icon

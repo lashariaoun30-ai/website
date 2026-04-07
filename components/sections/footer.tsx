@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip"
-import { Facebook, Instagram, Linkedin, Send, Twitter } from "lucide-react"
+import { Linkedin, Send } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 
 export function Footer() {
@@ -43,7 +43,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="relative">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight">Savante AI</h2>
+            <a href="#/"><h2 className="mb-4 text-3xl font-bold tracking-tight hover:text-zinc-300 transition-colors">Savante AI</h2></a>
             <p className="mb-6 text-zinc-400">
               Iscriviti alla nostra newsletter per le ultime novità sull'IA dentale.
             </p>
@@ -111,36 +111,12 @@ export function Footer() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 hover:text-white text-zinc-400">
-                      <Facebook className="h-5 w-5" />
-                      <span className="sr-only">Facebook</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Seguici su Facebook</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 hover:text-white text-zinc-400">
-                      <Instagram className="h-5 w-5" />
-                      <span className="sr-only">Instagram</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Seguici su Instagram</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 hover:text-white text-zinc-400">
-                      <Linkedin className="h-5 w-5" />
-                      <span className="sr-only">LinkedIn</span>
-                    </Button>
+                    <a href="https://www.linkedin.com/in/aoun-muhammad-424363263/" target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 hover:text-white text-zinc-400">
+                        <Linkedin className="h-5 w-5" />
+                        <span className="sr-only">LinkedIn</span>
+                      </Button>
+                    </a>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Connettiti su LinkedIn</p>
