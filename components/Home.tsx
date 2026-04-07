@@ -2,7 +2,6 @@ import React from 'react';
 import { HeroSection } from './sections/HeroSection';
 import { ProblemSection } from './sections/ProblemSection';
 import { SolutionsSection } from './sections/SolutionsSection';
-import { LiveDemoSection } from './sections/LiveDemoSection';
 import { BookingSection } from './sections/booking';
 import { SocialProof } from './sections/social-proof';
 import { BlogList } from './sections/blog-list';
@@ -24,11 +23,6 @@ export default function Home() {
       {/* Solutions Section */}
       <section id="solution">
         <SolutionsSection />
-      </section>
-
-      {/* Live Demo Section */}
-      <section id="demo">
-        <LiveDemoSection />
       </section>
 
       {/* Booking Section */}
