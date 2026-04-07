@@ -5,6 +5,7 @@ import BookingPage from './components/Booking';
 import BlogPage from './components/Blog';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import CalcolatorePage from './components/Calcolatore';
+import BlogPostPage from './components/BlogPost';
 import Layout from './components/Layout';
 
 // Placeholder component for Soluzioni
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/calcolatore" element={<CalcolatorePage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
         </Route>
       </Routes>
     </Router>

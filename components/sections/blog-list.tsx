@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { ScrollReveal } from "../ui/scroll-reveal";
+import { blogPosts } from "../../lib/blog-data";
 
 interface Post {
   id: string;
@@ -22,44 +23,17 @@ interface BlogListProps {
   posts?: Post[];
 }
 
-const defaultPosts: Post[] = [
-  {
-    id: "post-1",
-    title: "Riattivare Pazienti Inattivi: Il Tesoro Nascosto",
-    summary:
-      "Acquisire un nuovo paziente costa molto di più che riattivarne uno esistente. Scopri perché il tuo database è il tuo asset più grande e come svegliarlo senza sforzo.",
-    label: "Crescita",
-    author: "Savante Team",
-    published: "10 Mar 2024",
-    url: "#",
-    image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800",
-    tags: ["Crescita", "Marketing"],
-  },
-  {
-    id: "post-2",
-    title: "Aumentare il Fatturato senza spendere in Ads",
-    summary:
-      "Il segreto non è generare più lead, ma gestirli velocemente. Rispondere entro 5 minuti può moltiplicare i tassi di conversione. Ecco come l'IA lo rende possibile.",
-    label: "Strategia",
-    author: "Savante Team",
-    published: "05 Mar 2024",
-    url: "#",
-    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800",
-    tags: ["Strategia", "Automazione"],
-  },
-  {
-    id: "post-3",
-    title: "Eliminare Chiamate Perse e No-Show",
-    summary:
-      "Il 32% delle chiamate mediche non riceve risposta. I no-show costano migliaia di euro. Scopri come l'automazione copre i buchi della tua segreteria 24/7.",
-    label: "Efficienza",
-    author: "Savante Team",
-    published: "28 Feb 2024",
-    url: "#",
-    image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&q=80&w=800",
-    tags: ["Efficienza", "AI"],
-  },
-];
+const defaultPosts: Post[] = blogPosts.map((p) => ({
+  id: p.slug,
+  title: p.title,
+  summary: p.summary,
+  label: p.tags[0] || "",
+  author: p.author,
+  published: p.published,
+  url: `/#/blog/${p.slug}`,
+  image: p.image,
+  tags: p.tags,
+}));
 
 export function BlogList({
   heading = "Risorse per lo Studio Moderno",
